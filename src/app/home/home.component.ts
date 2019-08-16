@@ -19,15 +19,11 @@ export class HomeComponent implements OnInit {
     const courses$ = http$.pipe(
       map(res => Object.values(res['payload']) as Course[]),
       shareReplay(),
-      catchError(err => {
-          console.log('Error occurred', err);
-          return throwError(err);
-      }),
-      finalize(() => console.log('Finalize executed..'))
+      retryWhen(errors => errors.pipe(delayWhen(() => timer(2000)))),
     );
 
     this.beginnerCourses$ = courses$.pipe(map(courses => courses.filter(c => c.category == 'BEGINNER')));
-    this.advancedCourses$ = courses$.pipe(map(courses => courses.filter(c => c.category == 'ADVANCED')));
 
+    this.advancedCourses$ = courses$.pipe(map(courses => courses.filter(c => c.category == 'ADVANCED')));
   }
 }
