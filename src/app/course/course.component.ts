@@ -1,21 +1,11 @@
-import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {Course} from "../model/course";
-import {
-    debounceTime,
-    distinctUntilChanged,
-    startWith,
-    tap,
-    delay,
-    map,
-    concatMap,
-    switchMap,
-    withLatestFrom,
-    concatAll, shareReplay
-} from 'rxjs/operators';
-import {merge, fromEvent, Observable, concat} from 'rxjs';
-import {Lesson} from '../model/lesson';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from "@angular/router";
+import { Course } from "../model/course";
+import { debounceTime, distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
+import { fromEvent, Observable } from 'rxjs';
+import { Lesson } from '../model/lesson';
 import { createHttpObservable } from '../common/util';
+import { debug, RxJsLoggingLevel } from '../common/debug';
 
 
 @Component({
@@ -35,7 +25,8 @@ export class CourseComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
         this.courseId = this.route.snapshot.params['id'];
-        this.course$ = createHttpObservable(`/api/courses/${this.courseId}`);
+        this.course$ = createHttpObservable(`/api/courses/${this.courseId}`)
+            .pipe(debug(RxJsLoggingLevel.INFO, 'course value'));
     }
 
     ngAfterViewInit() {
@@ -43,9 +34,11 @@ export class CourseComponent implements OnInit, AfterViewInit {
             .pipe(
                 map(e => e.target.value),
                 startWith(''),
+                debug(RxJsLoggingLevel.TRACE, 'search'),
                 debounceTime(400),
                 distinctUntilChanged(),
-                switchMap(this.loadLessons)
+                switchMap(this.loadLessons),
+                debug(RxJsLoggingLevel.DEBUG, 'lessons value')
             );
     }
 
