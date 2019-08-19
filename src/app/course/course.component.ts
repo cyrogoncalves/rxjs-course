@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { Course } from "../model/course";
-import { debounceTime, distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
-import { fromEvent, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { forkJoin, fromEvent, Observable } from 'rxjs';
 import { Lesson } from '../model/lesson';
 import { createHttpObservable } from '../common/util';
 import { debug, RxJsLoggingLevel } from '../common/debug';
@@ -27,6 +27,13 @@ export class CourseComponent implements OnInit, AfterViewInit {
         this.courseId = this.route.snapshot.params['id'];
         this.course$ = createHttpObservable(`/api/courses/${this.courseId}`)
             .pipe(debug(RxJsLoggingLevel.INFO, 'course value'));
+        const lessons$ = this.loadLessons();
+
+        forkJoin(this.course$, lessons$)
+            .pipe(tap(([course, lessons]) => {
+                console.log('course', course);
+            }))
+            .subscribe();
     }
 
     ngAfterViewInit() {
